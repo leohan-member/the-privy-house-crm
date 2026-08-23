@@ -839,7 +839,7 @@ if (isPasswordRecovery) {
                 </h1>
 
                 <p className="mt-2 text-[10px] tracking-[4px] text-[#D8BF85]">
-                  MEMBERSHIP RIGHTS MANAGEMENT SYSTEM
+                  MEMBERSHIP MANAGEMENT SYSTEM
                 </p>
 
               </div>

@@ -110,24 +110,29 @@ useEffect(() => {
 
   const [members, setMembers] = useState<Membership[]>(initialMembers);
   const [membersLoaded, setMembersLoaded] = useState(false);
-  async function saveHistoryToSupabase(item: {
+ async function saveHistoryToSupabase(item: {
   date: string;
   unit: string;
   action: string;
   detail: string;
 }) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("History")
     .insert({
       date: item.date,
       unit: item.unit,
       action: item.action,
       detail: item.detail,
-    });
+    })
+    .select("id")
+    .single();
 
   if (error) {
     console.error("History Supabase 저장 실패:", error);
+    return null;
   }
+
+  return data?.id ?? null;
 }
 useEffect(() => {
     if (!session) return;
@@ -922,22 +927,31 @@ if (isPasswordRecovery) {
    onClick={async () => {
   if (selectedHistoryIds.length === 0) return;
 
+  const validHistoryIds = selectedHistoryIds.filter(
+  (id) => Number.isInteger(Number(id)) && Number(id) > 0
+);
+
+if (validHistoryIds.length > 0) {
   const { error } = await supabase
     .from("History")
     .delete()
-    .in("id", selectedHistoryIds);
+    .in(
+      "id",
+      validHistoryIds.map((id) => Number(id))
+    );
 
   if (error) {
     console.error("이력 삭제 실패:", error);
     alert("이력 삭제에 실패했습니다.");
     return;
   }
+}
 
-  setHistory((prev) =>
-    prev.filter((item) => !selectedHistoryIds.includes(item.id))
-  );
+setHistory((prev) =>
+  prev.filter((item) => !selectedHistoryIds.includes(item.id))
+);
 
-  setSelectedHistoryIds([]);
+setSelectedHistoryIds([]);
 }}
     className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
   >
@@ -2302,16 +2316,24 @@ const assignmentHistoryItem = {
   detail: `${selected.owner} → ${data.currentUser} / ${data.assignmentStart} ~ ${data.assignmentEnd}`,
 };
 
-void saveHistoryToSupabase({
+const savedHistoryId = await saveHistoryToSupabase({
   date: assignmentHistoryItem.date,
   unit: assignmentHistoryItem.unit,
   action: assignmentHistoryItem.action,
   detail: assignmentHistoryItem.detail,
 });
 
+if (savedHistoryId === null) {
+  alert("이력 저장에 실패했습니다.");
+  return;
+}
+
 setHistory((prev) => [
   ...prev,
-  assignmentHistoryItem,
+  {
+    ...assignmentHistoryItem,
+    id: savedHistoryId,
+  },
 ]);
       setSelected({
         ...selected,
@@ -2412,7 +2434,7 @@ setHistory((prev) => [
 
           <button
            type="button"
-            onClick={() => {
+onClick={async () => {
               const requester = (
                 document.getElementById("log-requester") as HTMLInputElement
               )?.value;
@@ -2446,15 +2468,23 @@ setHistory((prev) => [
   note,
 };
 
-void saveHistoryToSupabase({
+const savedHistoryId = await saveHistoryToSupabase({
   date: memoHistoryItem.date,
   unit: memoHistoryItem.unit,
   action: memoHistoryItem.action,
   detail: memoHistoryItem.detail,
 });
 
+if (savedHistoryId === null) {
+  alert("관리 기록 저장에 실패했습니다.");
+  return;
+}
+
 setHistory((prev) => [
-  memoHistoryItem,
+  {
+    ...memoHistoryItem,
+    id: savedHistoryId,
+  },
   ...prev,
 ]);
 setMembers((prev) =>

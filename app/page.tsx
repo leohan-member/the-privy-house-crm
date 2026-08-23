@@ -24,7 +24,8 @@ type Membership = {
   endDate: string;
   assignmentStart?: string;
   assignmentEnd?: string;
-  
+  updatedBy?: string;
+updatedAt?: string;
 };
 
 const initialMembers: Membership[] = [
@@ -162,6 +163,8 @@ useEffect(() => {
         endDate: row.end_date ?? "",
         assignmentStart: row.assignment_start ?? "",
         assignmentEnd: row.assignment_end ?? "",
+        updatedBy: row.updated_by ?? "",
+updatedAt: row.updated_at ?? "",
       }))
     );
 
@@ -719,6 +722,8 @@ async function updateMembership() {
             endDate: form.endDate,
             assignmentStart: form.assignmentStart,
 assignmentEnd: form.assignmentEnd,
+updatedBy: session?.user?.email || "",
+updatedAt: new Date().toISOString(),
           }
         : member
     )
@@ -1990,6 +1995,15 @@ setHistory((prev) => [
   title="MEMO"
   value={selected.memo || "등록된 비고가 없습니다."}
     sub=""
+/>
+<DetailCard
+  title="LAST UPDATED"
+  value={selected.updatedBy || "기존 등록 데이터"}
+  sub={
+    selected.updatedAt
+      ? new Date(selected.updatedAt).toLocaleString("ko-KR")
+      : "-"
+  }
 />
             </div>
 

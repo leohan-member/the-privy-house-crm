@@ -2565,7 +2565,24 @@ function LoginScreen() {
       alert("이메일 또는 비밀번호를 확인해주세요.");
     }
   }
+  async function handleForgotPassword() {
+    if (!email) {
+      alert("비밀번호를 재설정할 이메일을 먼저 입력해주세요.");
+      return;
+    }
 
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://the-privy-house-crm.vercel.app",
+    });
+
+    if (error) {
+      console.error("비밀번호 재설정 메일 발송 실패:", error);
+      alert("비밀번호 재설정 메일 발송에 실패했습니다.");
+      return;
+    }
+
+    alert("비밀번호 재설정 메일을 발송했습니다. 이메일을 확인해주세요.");
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F5F2EB] px-6">
       <div className="w-full max-w-md rounded-2xl border border-[#DED8CE] bg-white p-10 shadow-sm">
@@ -2611,6 +2628,13 @@ function LoginScreen() {
           >
             {loading ? "로그인 중..." : "로그인"}
           </button>
+          <button
+  type="button"
+  onClick={handleForgotPassword}
+  className="w-full text-center text-xs text-gray-500 hover:text-[#651A1A]"
+>
+  비밀번호를 잊으셨나요?
+</button>
         </div>
       </div>
     </div>

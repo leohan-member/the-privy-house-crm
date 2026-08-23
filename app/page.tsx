@@ -2608,7 +2608,7 @@ function LoginScreen() {
           </h1>
 
           <p className="mt-3 text-sm text-gray-500">
-            Membership Rights Management System
+            Membership Management System
           </p>
         </div>
 

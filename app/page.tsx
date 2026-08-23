@@ -129,6 +129,7 @@ useEffect(() => {
   }
 }
 useEffect(() => {
+    if (!session) return;
   async function loadMembers() {
     const { data, error } = await supabase
       .from("Member")
@@ -168,7 +169,7 @@ useEffect(() => {
   }
 
   loadMembers();
-}, []);
+}, [session]);
 useEffect(() => {
   async function testSupabase() {
     const { data, error } = await supabase
@@ -1910,7 +1911,7 @@ if (historyUpdateError) {
     onClick={() => setShowAssignment(true)}
     className="w-full rounded-lg bg-[#651A1A] py-4 text-sm text-white hover:bg-[#511313]"
   >
-    + 
+    + 일시승계
     
   </button>
 )}

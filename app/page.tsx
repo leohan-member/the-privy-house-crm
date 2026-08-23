@@ -83,6 +83,7 @@ const statusStyle = {
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
 const [authLoading, setAuthLoading] = useState(true);
+const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 useEffect(() => {
   supabase.auth.getSession().then(({ data }) => {
     setSession(data.session);
@@ -91,10 +92,15 @@ useEffect(() => {
 
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, newSession) => {
-    setSession(newSession);
-    setAuthLoading(false);
-  });
+  } = supabase.auth.onAuthStateChange((event, newSession) => {
+  setSession(newSession);
+
+  if (event === "PASSWORD_RECOVERY") {
+    setIsPasswordRecovery(true);
+  }
+
+  setAuthLoading(false);
+});
 
   return () => {
     subscription.unsubscribe();
@@ -792,7 +798,13 @@ setHistory((prev) => [
       </div>
     );
   }
-
+if (isPasswordRecovery) {
+  return (
+    <PasswordResetScreen
+      onDone={() => setIsPasswordRecovery(false)}
+    />
+  );
+}
   if (!session) {
     return <LoginScreen />;
   }
@@ -2635,6 +2647,97 @@ function LoginScreen() {
 >
   비밀번호를 잊으셨나요?
 </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function PasswordResetScreen({ onDone }: { onDone: () => void }) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleUpdatePassword() {
+    if (!newPassword || !confirmPassword) {
+      alert("새 비밀번호를 모두 입력해주세요.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert("비밀번호가 서로 일치하지 않습니다.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert("비밀번호는 6자 이상으로 설정해주세요.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      console.error("비밀번호 변경 실패:", error);
+      alert("비밀번호 변경에 실패했습니다.");
+      return;
+    }
+
+    alert("비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.");
+
+    await supabase.auth.signOut();
+    onDone();
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#F5F2EB] px-6">
+      <div className="w-full max-w-md rounded-2xl border border-[#DED8CE] bg-white p-10 shadow-sm">
+        <div className="mb-8 text-center">
+          <p className="text-[10px] tracking-[5px] text-[#8D6B52]">
+            THE PRIVY HOUSE
+          </p>
+
+          <h1 className="mt-4 text-3xl font-light text-[#651A1A]">
+            새 비밀번호 설정
+          </h1>
+
+          <p className="mt-3 text-sm text-gray-500">
+            새로운 비밀번호를 입력해주세요.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="새 비밀번호"
+            className="w-full rounded-lg border border-[#DED8CE] px-4 py-3 text-sm outline-none"
+          />
+
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleUpdatePassword();
+            }}
+            placeholder="새 비밀번호 확인"
+            className="w-full rounded-lg border border-[#DED8CE] px-4 py-3 text-sm outline-none"
+          />
+
+          <button
+            type="button"
+            onClick={handleUpdatePassword}
+            disabled={loading}
+            className="w-full rounded-lg bg-[#651A1A] py-3 text-sm text-white disabled:opacity-50"
+          >
+            {loading ? "변경 중..." : "비밀번호 변경"}
+          </button>
         </div>
       </div>
     </div>
